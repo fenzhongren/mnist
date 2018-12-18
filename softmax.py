@@ -19,14 +19,31 @@ training_images, training_labels = get_data_from_datasets(
 testing_images, testing_labels = get_data_from_datasets(
     testing_image_datasets, testing_label_datasets)
 
+# hypo is a k * num_examples matrix
 def calculate_hypo(images, theta):
-    z = images.dot(theta)
-    max_per_example = np.amax(z, axis=1, keepdims=True)
+    z = np.dot(theta.T, images.T)
+    max_per_example = np.amax(z, axis=0, keepdims=True)
     z = z - max_per_examples*0.75;
     exp_scores = np.exp(z)
-    exp_sum_per_example = np.sum(exp_scores, axis=1, keepdims=True)
+    exp_sum_per_example = np.sum(exp_scores, axis=0, keepdims=True)
     hypo = exp_scores/exp_sum_per_examples
     return hypo
+
+def calculate_loss(images, labels, theta):
+    hypo = calculate_hypo(images, theta)
+    num_examples = len(images)
+    right_per_example = hypo[labels, range(num_examples)]
+    log_score = np.log(right_per_example)
+    loss = -np.sum(log_score)
+    return loss
+    
+def calculate_gradient(images, labels, hypo):
+    negative_hypo = -hypo
+    num_examples = len(images)
+    negative_hypo[range(num_examples), labels] += 1
+    temp = np.dot(images.T, negative_hypo)
+    dtheta = 
+    
 
 def build_model(images, labels, num_pass=1000, step=0.01, print_loss=False):
     num_features = len(images[0])
