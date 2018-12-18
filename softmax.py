@@ -36,13 +36,12 @@ def calculate_loss(images, labels, theta):
     log_score = np.log(right_per_example)
     loss = -np.sum(log_score)
     return loss
-    
+
 def calculate_gradient(images, labels, hypo):
-    negative_hypo = -hypo
-    num_examples = len(images)
-    negative_hypo[range(num_examples), labels] += 1
-    temp = np.dot(images.T, negative_hypo)
-    dtheta = 
+    hypoT = -hypo.T
+    y = labels.T
+    
+    
     
 
 def build_model(images, labels, num_pass=1000, step=0.01, print_loss=False):
