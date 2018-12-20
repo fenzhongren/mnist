@@ -8,10 +8,12 @@ import numpy as np
 num_classes = 10
 
 np.seterr(all='raise')
+#np.seterr(divide='raise')
 #images is a num_examples*num_features matrix
 #labels is a 1*num_examples matrix
 def get_data_from_datasets(image_datasets, label_datasets):
-    softmax_images = image_datasets['images']
+    images = image_datasets['images']
+    softmax_images = (images > 100) * 0.01
     num_examples = label_datasets['num_items']
     softmax_labels = label_datasets['labels'].reshape(1, num_examples)
     return (softmax_images, softmax_labels)
@@ -27,7 +29,7 @@ def calculate_hypo(images, theta):
     #print(theta.T.shape, images.T.shape)
     z = np.dot(theta.T, images.T)
     max_per_examples = np.amax(z, axis=0, keepdims=True)
-    z = z - max_per_examples;
+    z = z - max_per_examples*0.75;
     
     try:
         exp_scores = np.exp(z)
@@ -59,15 +61,15 @@ def calculate_gradient(images, labels, hypo):
     return dtheta
 
 
-def build_model(images, labels, num_pass=1000, step=0.01, print_loss=False):
+def build_model(images, labels, num_pass=10000, step=0.01, print_loss=False):
     num_features = len(images[0])
     np.random.seed(0)
     theta = np.random.randn(num_features, num_classes)
 
     for i in range(num_pass):
         hypo = calculate_hypo(images, theta)
-        print(hypo[:, 0])
-        print(hypo[:, 1])
+        #print(hypo[:, 0])
+        #print(hypo[:, 1])
         loss = calculate_loss(images, labels, hypo)
         dtheta = calculate_gradient(images, labels, hypo)
 
@@ -77,4 +79,4 @@ def build_model(images, labels, num_pass=1000, step=0.01, print_loss=False):
 
     return theta
 
-theta = build_model(training_images, training_labels, step=0.1, print_loss=True)
+theta = build_model(training_images, training_labels, step=0.2, print_loss=True)
