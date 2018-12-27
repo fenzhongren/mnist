@@ -116,3 +116,21 @@ def build_model(images, labels, num_pass=10000, step=0.01, print_loss=False):
 
 #theta = build_model(training_images, training_labels, step=0.21, print_loss=True)
 test_gradient(training_images, training_labels)
+
+
+class SoftMax:
+    
+    def __init__(self):
+        pass
+
+
+    def fix(self, X, Y, num_pass=10000, step=0.02, print_loss=True):
+    '''
+    Parameters
+    ----------
+    X : num_examples * num_features matrix
+    Y : (num_examples, ) matrix
+    '''
+        label_classes = set(Y)
+        num_labels = len(label_classes)
+        build_model()
