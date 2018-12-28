@@ -131,6 +131,11 @@ class SoftMax:
     X : num_examples * num_features matrix
     Y : (num_examples, ) matrix
     '''
-        label_classes = set(Y)
+        #extract all possible classes from labels
+        num_examples = len(Y)
+        label_classes = np.array(list(set(Y)))
+        
+        indices = np.zeros(len(Y))
+        for i in range(len)
         num_labels = len(label_classes)
         build_model()
