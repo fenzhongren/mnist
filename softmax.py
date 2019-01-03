@@ -24,7 +24,7 @@ def get_data_from_datasets(image_datasets, label_datasets):
     images = image_datasets['images']
     softmax_images = (images > 100) * 0.01
     num_examples = label_datasets['num_items']
-    softmax_labels = label_datasets['labels'].reshape(1, num_examples)
+    softmax_labels = label_datasets['labels']
     return (softmax_images, softmax_labels)
 
 training_images, training_labels = get_data_from_datasets(
@@ -115,27 +115,73 @@ def build_model(images, labels, num_pass=10000, step=0.01, print_loss=False):
     return theta
 
 #theta = build_model(training_images, training_labels, step=0.21, print_loss=True)
-test_gradient(training_images, training_labels)
+#test_gradient(training_images, training_labels)
 
 
 class SoftMax:
+
+    check_parameters_error = 'Input images or labels error'
+    did_not_fit_error = "didn't fit your model"
+    testing_data_not_match_error = 'Testing dataset error'
+    
     
     def __init__(self):
-        pass
+        self.theta = None
+        self.label_classes = None
 
+    def check_training_parameters(self, X, Y):
+        num_examples_X, num_features = X.shape
+        num_examples_Y, = Y.shape
+        assert num_examples_X == num_examples_Y, check_parameters_error
 
-    def fix(self, X, Y, num_pass=10000, step=0.02, print_loss=True):
+    def check_testing_parameters(self, X):
+        assert (self.theta != None) and (self.label_classes != None), \
+            did_not_fit_error
+        num_testing_examples, num_testing_features = X.shape
+        num_features, num_classes = self.theta.shape
+        assert num_testing_features == num_features, \
+            testing_data_not_match_error
+
+    def relabel_by_index(self, Y):
+        num_examples, = Y.shape
+        self.label_classes = np.array(list(set(Y)))
+        
+        indices = np.zeros(num_examples)
+        for i in range(len):
+            index, = np.nonzero(self.label_classes==Y[i])
+            indices[i] = index
+        indices.shape = (1, num_examples)
+        return indices
+
+    def fit(self, X, Y, num_pass=10000, step=0.02, print_loss=True):
     '''
     Parameters
     ----------
     X : num_examples * num_features matrix
     Y : (num_examples, ) matrix
     '''
-        #extract all possible classes from labels
-        num_examples = len(Y)
-        label_classes = np.array(list(set(Y)))
-        
-        indices = np.zeros(len(Y))
-        for i in range(len)
-        num_labels = len(label_classes)
-        build_model()
+        self.check_training_parameters(X, Y)
+        indices = self.relabel_by_index(Y)
+        self.theta = build_model(X, indices, num_pass, step, print_loss)
+
+    def predict(self, X):
+    '''
+    Parameters
+    ----------
+    X : num_examples * num_features matrix
+    
+    Return : (num_examples, ) matrix
+    '''
+        self.check_testing_parameters(X)
+        hypo = calculate_hypo(X, self.theta)
+        hypo.shape = (len(hypo[0]), )
+        return hypo
+
+if __name__ == "__main__":
+    image_test = SoftMax()
+    image_test.fit(training_images, training_labels)
+    hypo = image_test(testing_images)
+    results = (hypo == testing_labels)
+    right_count = np.count_nonzero(results)
+    percent = (right_count / len(hypo)) * 100
+    print("accuracy: %" + str(percent))
