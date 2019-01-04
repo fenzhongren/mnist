@@ -142,36 +142,38 @@ class SoftMax:
         assert num_testing_features == num_features, \
             testing_data_not_match_error
 
-    def relabel_by_index(self, Y):
-        num_examples, = Y.shape
-        self.label_classes = np.array(list(set(Y)))
+    def conert_label_2_index(self, labels):
+        num_examples, = labels.shape
+        self.label_classes = np.array(list(set(labels)))
         
-        indices = np.zeros(num_examples)
-        for i in range(len):
-            index, = np.nonzero(self.label_classes==Y[i])
+        indices = np.zeros(num_examples, dtype=int)
+        for i in range(num_examples):
+            index, = np.nonzero(self.label_classes==labels[i])
             indices[i] = index
         indices.shape = (1, num_examples)
         return indices
 
+    def convert_index_2_label(self, indices)
+
     def fit(self, X, Y, num_pass=10000, step=0.02, print_loss=True):
-    '''
+        '''
     Parameters
     ----------
     X : num_examples * num_features matrix
     Y : (num_examples, ) matrix
-    '''
+        '''
         self.check_training_parameters(X, Y)
         indices = self.relabel_by_index(Y)
+        print(indices.dtype)
         self.theta = build_model(X, indices, num_pass, step, print_loss)
 
     def predict(self, X):
-    '''
+        '''
     Parameters
     ----------
     X : num_examples * num_features matrix
-    
     Return : (num_examples, ) matrix
-    '''
+        '''
         self.check_testing_parameters(X)
         hypo = calculate_hypo(X, self.theta)
         hypo.shape = (len(hypo[0]), )
