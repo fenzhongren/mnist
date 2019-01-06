@@ -19,7 +19,7 @@ def save_matrix(ma):
             writer.writerow(ma[i])
 
 #images is a num_examples*num_features matrix
-#labels is a 1*num_examples matrix
+#labels is a (num_examples, ) matrix
 def get_data_from_datasets(image_datasets, label_datasets):
     images = image_datasets['images']
     softmax_images = (images > 100) * 0.01
@@ -123,6 +123,7 @@ class SoftMax:
     check_parameters_error = 'Input images or labels error'
     did_not_fit_error = "didn't fit your model"
     testing_data_not_match_error = 'Testing dataset error'
+    convert_index_2_label_error = "Can't covert index to label"
     
     
     def __init__(self):
@@ -135,8 +136,8 @@ class SoftMax:
         assert num_examples_X == num_examples_Y, check_parameters_error
 
     def check_testing_parameters(self, X):
-        assert (self.theta != None) and (self.label_classes != None), \
-            did_not_fit_error
+        assert (type(self.theta) == np.ndarray) and (type(self.label_classes) \
+            == np.ndarray), did_not_fit_error
         num_testing_examples, num_testing_features = X.shape
         num_features, num_classes = self.theta.shape
         assert num_testing_features == num_features, \
@@ -153,7 +154,16 @@ class SoftMax:
         indices.shape = (1, num_examples)
         return indices
 
-    def convert_index_2_label(self, indices)
+    def convert_index_2_label(self, indices):
+        assert type(self.label_classes) == np.ndarray, \
+            convert_index_2_label_error
+        num_examples, = indices.shape
+
+        labels = np.zeros(num_examples, dtype=int)
+        for i in range(num_examples):
+            labels[i] = self.label_classes[indices[i]]
+        return labels
+        
 
     def fit(self, X, Y, num_pass=10000, step=0.02, print_loss=True):
         '''
@@ -163,7 +173,7 @@ class SoftMax:
     Y : (num_examples, ) matrix
         '''
         self.check_training_parameters(X, Y)
-        indices = self.relabel_by_index(Y)
+        indices = self.conert_label_2_index(Y)
         print(indices.dtype)
         self.theta = build_model(X, indices, num_pass, step, print_loss)
 
@@ -176,13 +186,14 @@ class SoftMax:
         '''
         self.check_testing_parameters(X)
         hypo = calculate_hypo(X, self.theta)
-        hypo.shape = (len(hypo[0]), )
-        return hypo
+        indies = np.argmax(hypo, axis=0)
+        labels = self.convert_index_2_label(indies)
+        return labels
 
 if __name__ == "__main__":
     image_test = SoftMax()
     image_test.fit(training_images, training_labels)
-    hypo = image_test(testing_images)
+    hypo = image_test.predict(testing_images)
     results = (hypo == testing_labels)
     right_count = np.count_nonzero(results)
     percent = (right_count / len(hypo)) * 100
