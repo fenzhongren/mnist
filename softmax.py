@@ -165,7 +165,7 @@ class SoftMax:
         return labels
         
 
-    def fit(self, X, Y, num_pass=10000, step=0.02, print_loss=True):
+    def fit(self, X, Y, num_pass=100000, step=0.02, print_loss=True):
         '''
     Parameters
     ----------
@@ -174,7 +174,6 @@ class SoftMax:
         '''
         self.check_training_parameters(X, Y)
         indices = self.conert_label_2_index(Y)
-        print(indices.dtype)
         self.theta = build_model(X, indices, num_pass, step, print_loss)
 
     def predict(self, X):
