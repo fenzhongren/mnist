@@ -44,20 +44,24 @@ def create_activation(act):
     else:
         assert 0, activation_kind_err
         
+def extract_label_classes_and_indices_from_labels(labels):
+    '''
+    Extract how many kinds of labels(label_classes) from provided labels. 
+    Use the label_classes to index labels so that we can covert provided 
+    labels to integer-form labels range from 0 to kinds-of-label - 1.
+    kinds-of-label equals to len(label_classes)
 
+    Reture
+    ----------
+    label_classes: (kinds-of-label, ) matrix
+    indices = (1, num_examples) matrix
+    '''
+    num_examples, = labels.shape
+    label_classes = np.array(list(set(labels)))
+    num_classes = len(label_classes)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-     
+    class_base_row = label_classes.reshape(1, num_classes)
+    class_base_column = labels.reshape(num_examples, 1)
+    X, Y = np.nonzero(class_base_row == class_base_column)
+    indices = Y.reshape(1, num_examples)
+    return (label_classes, indices)

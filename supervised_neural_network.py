@@ -26,29 +26,6 @@ training_images, training_labels = get_data_from_datasets(
 testing_images, testing_labels = get_data_from_datasets(
     testing_image_datasets, testing_label_datasets)
 
-def extract_label_classes_and_indices_from_labels(labels):
-    '''
-    Extract how many kinds of labels(label_classes) from provided labels. 
-    Use the label_classes to index labels so that we can covert provided 
-    labels to integer-form labels range from 0 to kinds-of-label - 1.
-    kinds-of-label equals to len(label_classes)
-    
-    Reture
-    ----------
-    label_classes: (kinds-of-label, ) matrix
-    indices = (1, num_examples) matrix
-    '''
-    num_examples, = labels.shape
-    label_classes = np.array(list(set(labels)))
-
-    indices = np.zeros(num_examples, dtype=int).reshape(1, num_examples)
-    for i in range(num_examples):
-        index, = np.nonzero(label_classes==labels[i])
-        indices[0][i] = index
-    return (label_classes, indices)
-    
-    
-
 class SupervisedNeuralNetwork:
     '''
     Create a supervised neural network describeed in:
@@ -99,36 +76,61 @@ class SupervisedNeuralNetwork:
             bias = 0.01 * random.randn(self.layout[i+1])
             self.W.append(weight)
             self.b.append(bias)
-       
-    def build_model(self, examples):
-
+    
+    # assume we have a 4-layer network: 0, 1, 2, 3
+    def build_model(self, examples, num_pass, step, lmd):
+        num_examples, num_features = examples.shape
+        # outputs contains activation results [0, 1, 2]
         outputs = []
+        # input layer, layer:0
         outputs.append(examples.T)
         activation = helper.create_activation(sefl.act)
         
         # calculate hidden layer, num_layers =4, i = 0, 1
-        for i in range(self.num_layers-2):
-            z_plus = np.dot(self.W[i], outputs[i]) + self.b[i]
-            a_plus = activation.calculate(z_plus)
-            outputs.append(a.plus)
+        for j in range(num_pass):
+            for i in range(self.num_layers-2):
+                z_plus = np.dot(self.W[i], outputs[i]) + self.b[i]
+                a_plus = activation.calculate(z_plus)
+                outputs.append(a_plus)
 
-        # for output layer, we use softmax
-        temp = self.num_layers-2
-        z_plus = np.dot(self.W[temp], output[temp]) + self.b[temp]
-        max_per_examples = np.amax(z_plus, axis=0, keepdims=True)
-        z_plus = z_plus - max_per_examples*0.75;
-        
-        try:
-            exp_scores = np.exp(z_plus)
-        except FloatingPointError:
-            print(z_plus)
-            raise
-    
-        exp_sum_per_examples = np.sum(exp_scores, axis=0, keepdims=True)
-        hypo = exp_scores/exp_sum_per_examples
+            # for output layer, we use softmax
+            temp = self.num_layers-2
+            z_plus = np.dot(self.W[temp], output[temp]) + self.b[temp]
+            max_per_examples = np.amax(z_plus, axis=0, keepdims=True)
+            z_plus = z_plus - max_per_examples*0.75;
 
-        
-    
+            try:
+                exp_scores = np.exp(z_plus)
+            except FloatingPointError:
+                print(z_plus)
+                raise
+
+            exp_sum_per_examples = np.sum(exp_scores, axis=0, keepdims=True)
+            # hypo is a (output_units, num_examples) maxtrix
+            hypo = exp_scores/exp_sum_per_examples
+
+            # perform backpropagation for output layer: 3
+            # deltas contains deltas [1, 2, 3]
+            deltas = []
+            delta = hypo
+            delta[self.indices[0], range(num_examples)] -= 1
+            delta = np.sum(delta, axis=1, keepdims=True)
+            deltas.insert(0, delta)
+            # perform backpropagation for hidden layer
+            # num_layers =4, we will perform for layer2 and layer1
+            layers = list(range(self.num_layers-2, 0 -1))   #[2, 1]
+            for i in range(self.num_layers-2):
+                delta = np.dot(self.W[i].T, deltas[0]) * \
+                    calculate_derivative_by_activation(outputs[i])
+                deltas.insert(0, delta)
+
+            # calculate gradient [0, 1, 2]
+            for i in range(self.num_layers - 1):
+                dW = np.dot(deltas[i], outputs[i].T)
+                db = deltas[i]
+                self.W[i] -= step * (dW/num_examples + lmd*self.W[i])
+                self.b[i] -= step * db / num_examples
+
     '''
     Parameters
     ----------
@@ -139,26 +141,10 @@ class SupervisedNeuralNetwork:
         print_loss=True):
         num_examples, num_features = examples.shape
         label_classes, indices = \
-            extract_label_classes_and_indices_from_labels(labels)
+            helper.extract_label_classes_and_indices_from_labels(labels)
         check_fit_features(label_classes, num_features)
+        self.label_classes, self.indices = label_classes, indices
         
         initialize_model();
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        build_model(examples, num_pass, step, lmd=0.01)
         
